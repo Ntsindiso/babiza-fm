@@ -1,0 +1,34 @@
+name: Babiza FM 24/7 Radio
+on:
+  schedule:
+    - cron: '0 */6 * * *' # Restarts every 6 hours to stay fresh
+  workflow_dispatch: # Allows you to start it manually
+
+jobs:
+  broadcast:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install FFmpeg
+        run: sudo apt-get install -y ffmpeg
+
+      - name: Start Radio DJ
+        run: |
+          # Get current hour in South Africa (UTC+2)
+          HOUR=$(date -u -d "+2 hours" +%H)
+          
+          if [ $HOUR -ge 04 ] && [ $HOUR -lt 10 ]; then
+            FOLDER="music/morning"
+          elif [ $HOUR -ge 10 ] && [ $HOUR -lt 16 ]; then
+            FOLDER="music/midday"
+          else
+            FOLDER="music/night"
+          fi
+          
+          echo "Current SA Hour: $HOUR - Playing from $FOLDER"
+          
+          # This command shuffles and streams your music
+          ffmpeg -re -f concat -safe 0 -i <(for f in ./${FOLDER}/*.mp3; do echo "file '$PWD/$f'"; done | shuf) \
+          -c:a libmp3lame -ab 128k -ac 2 -ar 44100 -f mp3 icecast://source:${{ secrets.ZENO_PASS }}@link.zeno.fm:80/fl9cqwh5b6ftv
