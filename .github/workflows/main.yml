@@ -16,9 +16,15 @@ jobs:
       - name: Shuffle and Broadcast
         run: |
           while true; do
-            # This shuffles everything in the music folder
-            find music -name "*.mp3" | shuf > playlist.txt
+            # 1. This looks INSIDE your music folder and handles names like "01 Yimi Umalume.mp3"
+            find music/ -name "*.mp3" -printf "file '%p'\n" | shuf > playlist.txt
             
-            # This streams to your Zeno station using the original method
-            ffmpeg -re -f concat -safe 0 -i <(sed 's/^/file /' playlist.txt) -f flv "rtmp://link.zeno.fm:80/fl9cqwh5b6ftv/JJq8xWfy"
+            # 2. Safety check: if no files are found, it will tell us why
+            if [ ! -s playlist.txt ]; then
+              echo "ERROR: No .mp3 files found in the music folder!"
+              exit 1
+            fi
+
+            # 3. Stream to Zeno
+            ffmpeg -re -f concat -safe 0 -i playlist.txt -f flv "rtmp://link.zeno.fm:80/f19cqwh5b6ftv/JJq8xWfy"
           done
