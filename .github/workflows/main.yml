@@ -1,8 +1,8 @@
 name: Babiza FM 24/7 Radio
 on:
   schedule:
-    - cron: '0 */6 * * *' # Restarts every 6 hours to stay fresh
-  workflow_dispatch: # Allows you to start it manually
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
 
 jobs:
   broadcast:
@@ -12,7 +12,9 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install FFmpeg
-        run: sudo apt-get install -y ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
 
       - name: Start Radio DJ
         run: |
@@ -29,6 +31,6 @@ jobs:
           
           echo "Current SA Hour: $HOUR - Playing from $FOLDER"
           
-          # This command shuffles and streams your music
-          ffmpeg -re -f concat -safe 0 -i <(for f in ./${FOLDER}/*.mp3; do echo "file '$PWD/$f'"; done | shuf) \
+          # This line shuffles and streams your music
+          ffmpeg -re -f concat -safe 0 -i <(find ./${FOLDER} -name "*.mp3" | sed "s/^\.\//file '$PWD\//;s/$/'/" | shuf) \
           -c:a libmp3lame -ab 128k -ac 2 -ar 44100 -f mp3 icecast://source:${{ secrets.ZENO_PASS }}@link.zeno.fm:80/fl9cqwh5b6ftv
