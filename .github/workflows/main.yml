@@ -16,9 +16,9 @@ jobs:
       - name: Shuffle and Broadcast
         run: |
           while true; do
-            # This finds EVERY .mp3 file in your GitHub, even if the names are random!
-            find . -name "*.mp3" | shuf > playlist.txt
+            # 1. This finds EVERY mp3 and handles spaces/random names perfectly
+            find . -name "*.mp3" -printf "file '%p'\n" | shuf > playlist.txt
             
-            # This tells the robot to play that list to Zeno
-            ffmpeg -re -f concat -safe 0 -i <(sed 's/^/file /' playlist.txt) -f flv "rtmp://link.zeno.fm:80/fl9cqwh5b6ftv/JJq8xWfy"
+            # 2. This streams that shuffled list to your Zeno station
+            ffmpeg -re -f concat -safe 0 -i playlist.txt -f flv "rtmp://link.zeno.fm:80/fl9cqwh5b6ftv/JJq8xWfy"
           done
