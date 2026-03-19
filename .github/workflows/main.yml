@@ -16,9 +16,16 @@ jobs:
       - name: Shuffle and Broadcast
         run: |
           while true; do
-            # 1. This finds EVERY mp3 and handles spaces/random names perfectly
-            find . -name "*.mp3" -printf "file '%p'\n" | shuf > playlist.txt
+            # 1. This finds every .mp3 in your music folder (including morning, midday, night)
+            # It adds 'quotes' around the names so spaces don't cause errors.
+            find music/ -name "*.mp3" -printf "file '%p'\n" | shuf > playlist.txt
             
-            # 2. This streams that shuffled list to your Zeno station
+            # 2. This checks if any songs were found
+            if [ ! -s playlist.txt ]; then
+              echo "No songs found! Check your music folder."
+              exit 1
+            fi
+
+            # 3. This sends the music to your Zeno station
             ffmpeg -re -f concat -safe 0 -i playlist.txt -f flv "rtmp://link.zeno.fm:80/fl9cqwh5b6ftv/JJq8xWfy"
           done
