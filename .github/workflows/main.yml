@@ -1,38 +1,15 @@
-name: Babiza FM 24/7 Radio
-on:
-  schedule:
-    - cron: '0 */6 * * *'
-  workflow_dispatch:
+- name: Broadcast Babiza FM
+  run: |
+    while true; do
+      # 1. Shuffle and Play Morning
+      find music/morning -name "*.mp3" | shuf > playlist.txt
+      ffmpeg -re -f concat -safe 0 -i <(sed 's/^/file /' playlist.txt) -f flv rtmp://YOUR_ZENO_SERVER_URL/YOUR_STREAM_KEY
 
-jobs:
-  broadcast:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      # 2. Shuffle and Play Midday
+      find music/midday -name "*.mp3" | shuf > playlist.txt
+      ffmpeg -re -f concat -safe 0 -i <(sed 's/^/file /' playlist.txt) -f flv rtmp://YOUR_ZENO_SERVER_URL/YOUR_STREAM_KEY
 
-      - name: Install FFmpeg
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
-
-      - name: Start Radio DJ
-        run: |
-          # Get current hour in South Africa (UTC+2)
-          HOUR=$(date -u -d "+2 hours" +%H)
-          
-          if [ $HOUR -ge 04 ] && [ $HOUR -lt 10 ]; then
-            FOLDER="music/morning"
-          elif [ $HOUR -ge 10 ] && [ $HOUR -lt 16 ]; then
-            FOLDER="music/midday"
-          else
-            FOLDER="music/night"
-          fi
-          
-          echo "Current SA Hour: $HOUR - Playing from $FOLDER"
-
-          # This updated line handles spaces in filenames correctly
-          find "$FOLDER" -maxdepth 1 -name "*.mp3" -printf "file '$PWD/%p'\n" | shuf > playlist.txt
-          
-          ffmpeg -re -f concat -safe 0 -i playlist.txt \
-          -c:a libmp3lame -ab 128k -ac 2 -ar 44100 -f mp3 icecast://source:${{ secrets.ZENO_PASS }}@link.zeno.fm:80/fl9cqwh5b6ftv
+      # 3. Shuffle and Play Night
+      find music/night -name "*.mp3" | shuf > playlist.txt
+      ffmpeg -re -f concat -safe 0 -i <(sed 's/^/file /' playlist.txt) -f flv rtmp://YOUR_ZENO_SERVER_URL/YOUR_STREAM_KEY
+    done
