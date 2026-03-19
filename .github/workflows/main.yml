@@ -1,15 +1,26 @@
-- name: Broadcast Babiza FM
-  run: |
-    while true; do
-      # 1. Shuffle and Play Morning
-      find music/morning -name "*.mp3" | shuf > playlist.txt
-      ffmpeg -re -f concat -safe 0 -i <(sed 's/^/file /' playlist.txt) -f flv rtmp://YOUR_ZENO_SERVER_URL/YOUR_STREAM_KEY
+name: Babiza FM 24/7 Radio
 
-      # 2. Shuffle and Play Midday
-      find music/midday -name "*.mp3" | shuf > playlist.txt
-      ffmpeg -re -f concat -safe 0 -i <(sed 's/^/file /' playlist.txt) -f flv rtmp://YOUR_ZENO_SERVER_URL/YOUR_STREAM_KEY
+on:
+  workflow_dispatch:
 
-      # 3. Shuffle and Play Night
-      find music/night -name "*.mp3" | shuf > playlist.txt
-      ffmpeg -re -f concat -safe 0 -i <(sed 's/^/file /' playlist.txt) -f flv rtmp://YOUR_ZENO_SERVER_URL/YOUR_STREAM_KEY
-    done
+jobs:
+  broadcast:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install FFmpeg
+        run: sudo apt-get install -y ffmpeg
+
+      - name: Shuffle and Broadcast
+        run: |
+          while true; do
+            # 1. Create a fresh list by shuffling each folder in order
+            find music/morning -name "*.mp3" | shuf > playlist.txt
+            find music/midday -name "*.mp3" | shuf >> playlist.txt
+            find music/night -name "*.mp3" | shuf >> playlist.txt
+            
+            # 2. Stream the combined shuffled list to Zeno
+            ffmpeg -re -f concat -safe 0 -i <(sed 's/^/file /' playlist.txt) -f flv "rtmp://link.zeno.fm:80/fl9cqwh5b6ftv/JJq8xWfy"
+          done
