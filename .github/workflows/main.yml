@@ -30,7 +30,9 @@ jobs:
           fi
           
           echo "Current SA Hour: $HOUR - Playing from $FOLDER"
+
+          # This updated line handles spaces in filenames correctly
+          find "$FOLDER" -maxdepth 1 -name "*.mp3" -printf "file '$PWD/%p'\n" | shuf > playlist.txt
           
-          # This line shuffles and streams your music
-          ffmpeg -re -f concat -safe 0 -i <(find ./${FOLDER} -name "*.mp3" | sed "s/^\.\//file '$PWD\//;s/$/'/" | shuf) \
+          ffmpeg -re -f concat -safe 0 -i playlist.txt \
           -c:a libmp3lame -ab 128k -ac 2 -ar 44100 -f mp3 icecast://source:${{ secrets.ZENO_PASS }}@link.zeno.fm:80/fl9cqwh5b6ftv
